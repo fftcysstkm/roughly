@@ -8,10 +8,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native'
 
+import { DateInput } from '@/src/components/DateInput'
 import { ReminderItem } from '@/src/models/ReminderItem'
 import { completeReminder, deleteReminder, getReminderById } from '@/src/services/reminderService'
 import { getTodayDate } from '@/src/utils/dateUtils'
@@ -120,13 +120,7 @@ export default function ReminderDetailScreen() {
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
             <Text style={styles.modalTitle}>実施日を指定</Text>
-            <TextInput
-              autoCapitalize="none"
-              onChangeText={setPerformedDate}
-              placeholder="YYYY-MM-DD"
-              style={styles.input}
-              value={performedDate}
-            />
+            <DateInput onChange={setPerformedDate} value={performedDate} />
             <View style={styles.modalActions}>
               <Pressable onPress={() => setIsDateModalVisible(false)} style={styles.modalButton}>
                 <Text>キャンセル</Text>
@@ -162,7 +156,6 @@ const styles = StyleSheet.create({
   modalBackdrop: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: 'rgba(0, 0, 0, 0.45)' },
   modalCard: { gap: 16, padding: 20, borderRadius: 12, backgroundColor: '#fff' },
   modalTitle: { fontSize: 20, fontWeight: '700' },
-  input: { borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 16 },
   modalActions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 8 },
   modalButton: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8 },
   modalSubmit: { backgroundColor: '#fbbc04' },

@@ -8,6 +8,18 @@ export function getTodayDate(today = new Date()): string {
   return format(today, DATE_FORMAT)
 }
 
+export function formatStorageDate(date: Date): string {
+  return format(date, DATE_FORMAT)
+}
+
+export function parseStorageDate(date: string): Date {
+  return parseISO(date)
+}
+
+export function formatDisplayDate(date: string): string {
+  return format(parseISO(date), 'yyyy年M月d日')
+}
+
 export function createNotificationDate(date: string, notificationTime: string): Date {
   const [hour, minute] = notificationTime.split(':').map(Number)
   const notificationDate = parseISO(date)

@@ -1,6 +1,7 @@
 import { Controller, useForm } from 'react-hook-form'
 import { Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 
+import { DateInput } from '@/src/components/DateInput'
 import { INTERVAL_UNITS, IntervalUnit } from '@/src/models/IntervalUnit'
 import { ReminderInput } from '@/src/models/ReminderItem'
 import { validateReminder } from '@/src/utils/validation'
@@ -54,7 +55,7 @@ export function ReminderForm({ defaultValues, submitLabel, isSubmitting, onSubmi
 
       <Text style={styles.label}>前回実施日</Text>
       <Controller control={control} name="lastPerformedDate" render={({ field }) => (
-        <TextInput {...field} autoCapitalize="none" onChangeText={field.onChange} placeholder="YYYY-MM-DD" style={styles.input} />
+        <DateInput onChange={field.onChange} value={field.value} />
       )} />
       {errors.lastPerformedDate && <Text style={styles.error}>{errors.lastPerformedDate.message}</Text>}
 
