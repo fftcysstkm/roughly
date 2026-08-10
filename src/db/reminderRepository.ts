@@ -110,3 +110,39 @@ export async function deleteById(id: string): Promise<void> {
 export async function deleteAll(): Promise<void> {
   await database.runAsync('DELETE FROM reminder_items')
 }
+
+export async function insertMany(
+  reminders: ReminderItem[],
+  mode: 'ADD' | 'REPLACE',
+): Promise<number> {
+  let insertedCount = 0
+
+  await database.withTransactionAsync(async () => {
+    if (mode === 'REPLACE') {
+      await database.runAsync('DELETE FROM reminder_items')
+    }
+
+    for (const reminder of reminders) {
+      const result = await database.runAsync(
+        `INSERT OR IGNORE INTO reminder_items (
+          id, title, memo, last_performed_date, interval_value, interval_unit,
+          repeat_enabled, next_notification_date, snoozed_until, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        reminder.id,
+        reminder.title,
+        reminder.memo,
+        reminder.lastPerformedDate,
+        reminder.intervalValue,
+        reminder.intervalUnit,
+        reminder.repeatEnabled ? 1 : 0,
+        reminder.nextNotificationDate,
+        reminder.snoozedUntil,
+        reminder.createdAt,
+        reminder.updatedAt,
+      )
+      insertedCount += result.changes
+    }
+  })
+
+  return insertedCount
+}
