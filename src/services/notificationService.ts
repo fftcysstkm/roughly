@@ -112,3 +112,33 @@ export async function rescheduleAllNotifications(reminders: ReminderItem[]): Pro
     await scheduleReminderNotification(reminder, notificationTime)
   }
 }
+
+export async function scheduleTestNotification(): Promise<void> {
+  if (!areNotificationsAvailable()) {
+    throw new Error('Expo Goでは通知を利用できません。APK版でお試しください')
+  }
+  if (!await hasNotificationPermission()) {
+    throw new Error('通知が許可されていません。端末の設定から通知を許可してください')
+  }
+
+  const Notifications = await getNotifications()
+  await Notifications.scheduleNotificationAsync({
+    content: {
+      title: 'Roughly テスト通知',
+      body: 'ローカル通知は正常に動作しています。',
+      sound: true,
+    },
+    trigger: Platform.OS === 'android'
+      ? {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 5,
+          repeats: false,
+          channelId: REMINDER_CHANNEL,
+        }
+      : {
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+          seconds: 5,
+          repeats: false,
+        },
+  })
+}

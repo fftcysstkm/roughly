@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { exportBackup, importBackup, ImportMode, selectBackupFile } from '@/src/services/backupService'
-import { areNotificationsAvailable } from '@/src/services/notificationService'
+import { areNotificationsAvailable, scheduleTestNotification } from '@/src/services/notificationService'
 import { getNotificationTime, updateNotificationTime } from '@/src/services/settingsService'
 
 export default function SettingsScreen() {
@@ -37,6 +37,18 @@ export default function SettingsScreen() {
       await exportBackup()
     } catch (error) {
       Alert.alert('エクスポートできませんでした', getErrorMessage(error))
+    } finally {
+      setIsWorking(false)
+    }
+  }
+
+  async function handleTestNotification() {
+    setIsWorking(true)
+    try {
+      await scheduleTestNotification()
+      Alert.alert('予約しました', '5秒後に通知します。アプリを閉じるか、バックグラウンドにしてください。')
+    } catch (error) {
+      Alert.alert('テスト通知を予約できませんでした', getErrorMessage(error))
     } finally {
       setIsWorking(false)
     }
@@ -110,6 +122,13 @@ export default function SettingsScreen() {
       />
       <Pressable disabled={isWorking} onPress={() => void saveNotificationTime()} style={[styles.button, isWorking && styles.disabled]}>
         <Text style={styles.buttonText}>保存</Text>
+      </Pressable>
+      <Pressable
+        disabled={isWorking || !areNotificationsAvailable()}
+        onPress={() => void handleTestNotification()}
+        style={[styles.secondaryButton, (isWorking || !areNotificationsAvailable()) && styles.disabled]}
+      >
+        <Text style={styles.secondaryButtonText}>5秒後にテスト通知</Text>
       </Pressable>
 
       <View style={styles.section}>
