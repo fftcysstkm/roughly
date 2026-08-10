@@ -15,14 +15,7 @@ export default function ReminderListScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TextInput accessibilityLabel="リマインダーを検索" onChangeText={setQuery} placeholder="検索" style={styles.search} value={query} />
-        <Link href="/settings" asChild>
-          <Pressable accessibilityRole="button" style={styles.settingsButton}>
-            <Text>設定</Text>
-          </Pressable>
-        </Link>
-      </View>
+      <TextInput accessibilityLabel="リマインダーを検索" onChangeText={setQuery} placeholder="検索" style={styles.search} value={query} />
 
       {isLoading ? <ActivityIndicator style={styles.loading} /> : (
         <FlatList
@@ -51,9 +44,7 @@ export default function ReminderListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  header: { flexDirection: 'row', gap: 8 },
-  search: { flex: 1, borderWidth: 1, borderColor: '#d6d6d6', borderRadius: 8, padding: 12 },
-  settingsButton: { justifyContent: 'center', paddingHorizontal: 12 },
+  search: { borderWidth: 1, borderColor: '#d6d6d6', borderRadius: 8, padding: 12 },
   loading: { flex: 1 },
   list: { paddingVertical: 16, gap: 10 },
   empty: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },

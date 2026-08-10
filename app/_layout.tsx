@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { router, Stack } from 'expo-router'
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, View } from 'react-native'
 
 import { database } from '@/src/db/database'
 import { runMigrations } from '@/src/db/migrations'
@@ -92,7 +92,23 @@ export default function RootLayout() {
 
   return (
     <Stack>
-      <Stack.Screen name="index" options={{ title: 'リマインダー' }} />
+      <Stack.Screen
+        name="index"
+        options={{
+          title: 'Roughly',
+          headerRight: () => (
+            <Pressable
+              accessibilityLabel="設定"
+              accessibilityRole="button"
+              hitSlop={12}
+              onPress={() => router.push('/settings')}
+              style={styles.settingsButton}
+            >
+              <Text style={styles.settingsIcon}>⚙</Text>
+            </Pressable>
+          ),
+        }}
+      />
       <Stack.Screen name="reminders/new" options={{ title: '新規登録' }} />
       <Stack.Screen name="reminders/[id]" options={{ title: '詳細' }} />
       <Stack.Screen name="reminders/[id]/edit" options={{ title: '編集' }} />
@@ -106,5 +122,14 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  settingsButton: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 40,
+    height: 40,
+  },
+  settingsIcon: {
+    fontSize: 24,
   },
 })
