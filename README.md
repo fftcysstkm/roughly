@@ -5,7 +5,7 @@
 ## 開発環境
 
 - Node.js 20.19.4以上
-- Expo SDK 57
+- Expo SDK 54
 - React Native / TypeScript / Expo Router
 
 ## セットアップ
