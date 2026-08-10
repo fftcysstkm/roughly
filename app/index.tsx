@@ -1,11 +1,22 @@
-import { Link } from 'expo-router'
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+import { useCallback, useState } from 'react'
+import { Link, router, useFocusEffect } from 'expo-router'
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
+
+import { ReminderListItem } from '@/src/components/ReminderListItem'
+import { useReminders } from '@/src/hooks/useReminders'
 
 export default function ReminderListScreen() {
+  const [query, setQuery] = useState('')
+  const { reminders, isLoading, error, refresh } = useReminders(query)
+
+  useFocusEffect(useCallback(() => {
+    void refresh()
+  }, [refresh]))
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TextInput accessibilityLabel="リマインダーを検索" placeholder="検索" style={styles.search} />
+        <TextInput accessibilityLabel="リマインダーを検索" onChangeText={setQuery} placeholder="検索" style={styles.search} value={query} />
         <Link href="/settings" asChild>
           <Pressable accessibilityRole="button" style={styles.settingsButton}>
             <Text>設定</Text>
@@ -13,10 +24,21 @@ export default function ReminderListScreen() {
         </Link>
       </View>
 
-      <View style={styles.empty}>
-        <Text style={styles.emptyTitle}>リマインダーはまだありません</Text>
-        <Text style={styles.emptyText}>右下の＋から最初の項目を登録できます。</Text>
-      </View>
+      {isLoading ? <ActivityIndicator style={styles.loading} /> : (
+        <FlatList
+          contentContainerStyle={reminders.length === 0 ? styles.empty : styles.list}
+          data={reminders}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <View style={styles.emptyContent}>
+              <Text style={styles.emptyTitle}>{query ? '一致する項目がありません' : 'リマインダーはまだありません'}</Text>
+              {!query && <Text style={styles.emptyText}>右下の＋から最初の項目を登録できます。</Text>}
+            </View>
+          }
+          renderItem={({ item }) => <ReminderListItem reminder={item} onPress={() => router.push(`/reminders/${item.id}`)} />}
+        />
+      )}
+      {error && <Text style={styles.error}>{error.message}</Text>}
 
       <Link href="/reminders/new" asChild>
         <Pressable accessibilityLabel="リマインダーを追加" accessibilityRole="button" style={styles.addButton}>
@@ -32,9 +54,13 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', gap: 8 },
   search: { flex: 1, borderWidth: 1, borderColor: '#d6d6d6', borderRadius: 8, padding: 12 },
   settingsButton: { justifyContent: 'center', paddingHorizontal: 12 },
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 8 },
+  loading: { flex: 1 },
+  list: { paddingVertical: 16, gap: 10 },
+  empty: { flexGrow: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyContent: { alignItems: 'center', gap: 8 },
   emptyTitle: { fontSize: 18, fontWeight: '600' },
   emptyText: { color: '#666' },
+  error: { color: '#b00020', padding: 8 },
   addButton: {
     position: 'absolute', right: 24, bottom: 24, width: 56, height: 56, borderRadius: 28,
     alignItems: 'center', justifyContent: 'center', backgroundColor: '#fbbc04', elevation: 4,

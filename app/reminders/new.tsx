@@ -1,11 +1,34 @@
-import { StyleSheet, Text, View } from 'react-native'
+import { useState } from 'react'
+import { router } from 'expo-router'
+import { format } from 'date-fns'
+import { Alert } from 'react-native'
+
+import { ReminderForm } from '@/src/components/ReminderForm'
+import { ReminderInput } from '@/src/models/ReminderItem'
+import { createReminder } from '@/src/services/reminderService'
 
 export default function NewReminderScreen() {
-  return (
-    <View style={styles.container}>
-      <Text>登録フォームは次の実装単位で追加します。</Text>
-    </View>
-  )
-}
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-const styles = StyleSheet.create({ container: { flex: 1, padding: 16, backgroundColor: '#fff' } })
+  async function handleSubmit(input: ReminderInput) {
+    setIsSubmitting(true)
+    try {
+      await createReminder(input)
+      router.back()
+    } catch (error) {
+      Alert.alert('登録できませんでした', error instanceof Error ? error.message : '時間をおいて再度お試しください')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  return <ReminderForm
+    defaultValues={{
+      title: '', memo: '', lastPerformedDate: format(new Date(), 'yyyy-MM-dd'),
+      intervalValue: '1', intervalUnit: 'MONTH', repeatEnabled: true,
+    }}
+    isSubmitting={isSubmitting}
+    onSubmit={handleSubmit}
+    submitLabel="登録"
+  />
+}
