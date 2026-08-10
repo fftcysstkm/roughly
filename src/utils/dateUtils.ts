@@ -4,6 +4,10 @@ import { IntervalUnit } from '@/src/models/IntervalUnit'
 
 const DATE_FORMAT = 'yyyy-MM-dd'
 
+export function getTodayDate(today = new Date()): string {
+  return format(today, DATE_FORMAT)
+}
+
 export function calculateNextNotificationDate(
   performedDate: string,
   intervalValue: number,

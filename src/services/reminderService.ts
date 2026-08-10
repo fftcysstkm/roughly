@@ -38,3 +38,78 @@ export async function getReminders(query = ''): Promise<ReminderItem[]> {
   const normalizedQuery = query.trim()
   return normalizedQuery ? reminderRepository.search(normalizedQuery) : reminderRepository.findAll()
 }
+
+export async function getReminderById(id: string): Promise<ReminderItem | null> {
+  return reminderRepository.findById(id)
+}
+
+export async function updateReminder(id: string, input: ReminderInput): Promise<ReminderItem> {
+  const validationErrors = validateReminder(input)
+  if (Object.keys(validationErrors).length > 0) {
+    throw new Error('入力内容を確認してください')
+  }
+
+  const current = await reminderRepository.findById(id)
+  if (!current) {
+    throw new Error('リマインダーが見つかりません')
+  }
+
+  const shouldRecalculateNextDate =
+    current.lastPerformedDate !== input.lastPerformedDate
+    || current.intervalValue !== input.intervalValue
+    || current.intervalUnit !== input.intervalUnit
+
+  const reminder: ReminderItem = {
+    ...current,
+    title: input.title.trim(),
+    memo: input.memo?.trim() || null,
+    lastPerformedDate: input.lastPerformedDate,
+    intervalValue: input.intervalValue,
+    intervalUnit: input.intervalUnit,
+    repeatEnabled: input.repeatEnabled,
+    nextNotificationDate: shouldRecalculateNextDate
+      ? calculateNextNotificationDate(input.lastPerformedDate, input.intervalValue, input.intervalUnit)
+      : current.nextNotificationDate,
+    updatedAt: new Date().toISOString(),
+  }
+
+  await reminderRepository.update(reminder)
+  return reminder
+}
+
+export async function completeReminder(id: string, performedDate: string): Promise<ReminderItem> {
+  const current = await reminderRepository.findById(id)
+  if (!current) {
+    throw new Error('リマインダーが見つかりません')
+  }
+
+  const validationErrors = validateReminder({
+    ...current,
+    lastPerformedDate: performedDate,
+  })
+  if (validationErrors.lastPerformedDate) {
+    throw new Error(validationErrors.lastPerformedDate)
+  }
+
+  const reminder: ReminderItem = {
+    ...current,
+    lastPerformedDate: performedDate,
+    nextNotificationDate: current.repeatEnabled
+      ? calculateNextNotificationDate(performedDate, current.intervalValue, current.intervalUnit)
+      : null,
+    snoozedUntil: null,
+    updatedAt: new Date().toISOString(),
+  }
+
+  await reminderRepository.update(reminder)
+  return reminder
+}
+
+export async function deleteReminder(id: string): Promise<void> {
+  const current = await reminderRepository.findById(id)
+  if (!current) {
+    throw new Error('リマインダーが見つかりません')
+  }
+
+  await reminderRepository.deleteById(id)
+}

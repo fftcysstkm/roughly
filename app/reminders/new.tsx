@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { router } from 'expo-router'
-import { format } from 'date-fns'
 import { Alert } from 'react-native'
 
 import { ReminderForm } from '@/src/components/ReminderForm'
 import { ReminderInput } from '@/src/models/ReminderItem'
 import { createReminder } from '@/src/services/reminderService'
+import { getTodayDate } from '@/src/utils/dateUtils'
 
 export default function NewReminderScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -24,7 +24,7 @@ export default function NewReminderScreen() {
 
   return <ReminderForm
     defaultValues={{
-      title: '', memo: '', lastPerformedDate: format(new Date(), 'yyyy-MM-dd'),
+      title: '', memo: '', lastPerformedDate: getTodayDate(),
       intervalValue: '1', intervalUnit: 'MONTH', repeatEnabled: true,
     }}
     isSubmitting={isSubmitting}
