@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications'
+import Constants, { ExecutionEnvironment } from 'expo-constants'
 import { Platform } from 'react-native'
 
 import * as settingsRepository from '@/src/db/settingsRepository'
@@ -12,16 +12,29 @@ export const SNOOZE_ONE_WEEK = 'SNOOZE_ONE_WEEK'
 const REMINDER_CATEGORY = 'REMINDER_ACTIONS'
 const REMINDER_CHANNEL = 'reminders'
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-})
+type NotificationModule = typeof import('expo-notifications')
+
+export function areNotificationsAvailable(): boolean {
+  return Constants.executionEnvironment !== ExecutionEnvironment.StoreClient
+}
+
+async function getNotifications(): Promise<NotificationModule> {
+  return import('expo-notifications')
+}
 
 export async function initializeNotifications(): Promise<void> {
+  if (!areNotificationsAvailable()) return
+
+  const Notifications = await getNotifications()
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  })
+
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync(REMINDER_CHANNEL, {
       name: 'リマインダー',
@@ -37,6 +50,7 @@ export async function initializeNotifications(): Promise<void> {
 }
 
 async function hasNotificationPermission(): Promise<boolean> {
+  const Notifications = await getNotifications()
   const current = await Notifications.getPermissionsAsync()
   if (current.granted) return true
 
@@ -45,6 +59,9 @@ async function hasNotificationPermission(): Promise<boolean> {
 }
 
 export async function cancelReminderNotification(reminderId: string): Promise<void> {
+  if (!areNotificationsAvailable()) return
+
+  const Notifications = await getNotifications()
   const scheduled = await Notifications.getAllScheduledNotificationsAsync()
   const targets = scheduled.filter((notification) => notification.content.data?.reminderId === reminderId)
   await Promise.all(targets.map((notification) => (
@@ -56,6 +73,8 @@ export async function scheduleReminderNotification(
   reminder: ReminderItem,
   notificationTime?: string,
 ): Promise<boolean> {
+  if (!areNotificationsAvailable()) return false
+
   await cancelReminderNotification(reminder.id)
 
   const targetDate = reminder.snoozedUntil ?? reminder.nextNotificationDate
@@ -66,6 +85,7 @@ export async function scheduleReminderNotification(
   if (triggerDate.getTime() <= Date.now()) return false
   if (!await hasNotificationPermission()) return false
 
+  const Notifications = await getNotifications()
   await Notifications.scheduleNotificationAsync({
     content: {
       title: reminder.title,
@@ -82,6 +102,9 @@ export async function scheduleReminderNotification(
 }
 
 export async function rescheduleAllNotifications(reminders: ReminderItem[]): Promise<void> {
+  if (!areNotificationsAvailable()) return
+
+  const Notifications = await getNotifications()
   const notificationTime = await settingsRepository.getNotificationTime()
   await Notifications.cancelAllScheduledNotificationsAsync()
 

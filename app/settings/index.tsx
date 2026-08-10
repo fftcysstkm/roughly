@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
 import { getNotificationTime, updateNotificationTime } from '@/src/services/settingsService'
+import { areNotificationsAvailable } from '@/src/services/notificationService'
 
 export default function SettingsScreen() {
   const [notificationTime, setNotificationTime] = useState('09:00')
@@ -37,6 +38,9 @@ export default function SettingsScreen() {
     <View style={styles.container}>
       <Text style={styles.heading}>通知時刻</Text>
       <Text style={styles.description}>すべてのリマインダーに共通で使用します。</Text>
+      {!areNotificationsAvailable() && (
+        <Text style={styles.notice}>Expo Goでは通知を利用できません。Development Buildで有効になります。</Text>
+      )}
       <TextInput
         accessibilityLabel="通知時刻"
         autoCapitalize="none"
@@ -58,6 +62,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
   heading: { fontSize: 18, fontWeight: '700' },
   description: { color: '#666' },
+  notice: { padding: 12, borderRadius: 8, color: '#7a5200', backgroundColor: '#fff3cd' },
   input: { width: 120, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 12, fontSize: 18 },
   button: { alignItems: 'center', marginTop: 8, padding: 14, borderRadius: 8, backgroundColor: '#fbbc04' },
   buttonText: { fontSize: 16, fontWeight: '700' },

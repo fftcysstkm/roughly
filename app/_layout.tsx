@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import * as Notifications from 'expo-notifications'
 import { router, Stack } from 'expo-router'
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native'
 
@@ -8,6 +7,7 @@ import { runMigrations } from '@/src/db/migrations'
 import * as reminderRepository from '@/src/db/reminderRepository'
 import {
   initializeNotifications,
+  areNotificationsAvailable,
   rescheduleAllNotifications,
   SNOOZE_ONE_WEEK,
   SNOOZE_THREE_DAYS,
@@ -33,31 +33,49 @@ export default function RootLayout() {
   }, [])
 
   useEffect(() => {
-    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
-      const reminderId = response.notification.request.content.data?.reminderId
-      if (typeof reminderId !== 'string') return
+    if (!areNotificationsAvailable()) return
 
-      const days = response.actionIdentifier === SNOOZE_TOMORROW
-        ? 1
-        : response.actionIdentifier === SNOOZE_THREE_DAYS
-          ? 3
-          : response.actionIdentifier === SNOOZE_ONE_WEEK
-            ? 7
-            : null
+    let isMounted = true
+    let removeListener: (() => void) | undefined
 
-      if (days) {
-        snoozeReminder(reminderId, getSnoozedDate(days)).catch((snoozeError: unknown) => {
-          Alert.alert(
-            'スヌーズできませんでした',
-            snoozeError instanceof Error ? snoozeError.message : '時間をおいて再度お試しください',
-          )
-        })
-      } else {
-        router.push(`/reminders/${reminderId}`)
-      }
+    import('expo-notifications').then((Notifications) => {
+      if (!isMounted) return
+
+      const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        const reminderId = response.notification.request.content.data?.reminderId
+        if (typeof reminderId !== 'string') return
+
+        const days = response.actionIdentifier === SNOOZE_TOMORROW
+          ? 1
+          : response.actionIdentifier === SNOOZE_THREE_DAYS
+            ? 3
+            : response.actionIdentifier === SNOOZE_ONE_WEEK
+              ? 7
+              : null
+
+        if (days) {
+          snoozeReminder(reminderId, getSnoozedDate(days)).catch((snoozeError: unknown) => {
+            Alert.alert(
+              'スヌーズできませんでした',
+              snoozeError instanceof Error ? snoozeError.message : '時間をおいて再度お試しください',
+            )
+          })
+        } else {
+          router.push(`/reminders/${reminderId}`)
+        }
+      })
+      removeListener = () => subscription.remove()
+    }).catch((notificationError: unknown) => {
+      Alert.alert(
+        '通知を初期化できませんでした',
+        notificationError instanceof Error ? notificationError.message : '時間をおいて再度お試しください',
+      )
     })
 
-    return () => subscription.remove()
+    return () => {
+      isMounted = false
+      removeListener?.()
+    }
   }, [])
 
   if (error) {
