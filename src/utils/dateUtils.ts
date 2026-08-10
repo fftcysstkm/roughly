@@ -1,4 +1,4 @@
-import { addMonths, addWeeks, addYears, differenceInCalendarDays, format, parseISO } from 'date-fns'
+import { addDays, addMonths, addWeeks, addYears, differenceInCalendarDays, format, parseISO } from 'date-fns'
 
 import { IntervalUnit } from '@/src/models/IntervalUnit'
 
@@ -6,6 +6,17 @@ const DATE_FORMAT = 'yyyy-MM-dd'
 
 export function getTodayDate(today = new Date()): string {
   return format(today, DATE_FORMAT)
+}
+
+export function createNotificationDate(date: string, notificationTime: string): Date {
+  const [hour, minute] = notificationTime.split(':').map(Number)
+  const notificationDate = parseISO(date)
+  notificationDate.setHours(hour ?? 9, minute ?? 0, 0, 0)
+  return notificationDate
+}
+
+export function getSnoozedDate(days: number, today = new Date()): string {
+  return format(addDays(today, days), DATE_FORMAT)
 }
 
 export function calculateNextNotificationDate(

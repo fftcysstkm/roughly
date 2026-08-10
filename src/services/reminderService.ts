@@ -4,6 +4,7 @@ import * as reminderRepository from '@/src/db/reminderRepository'
 import { ReminderInput, ReminderItem } from '@/src/models/ReminderItem'
 import { calculateNextNotificationDate } from '@/src/utils/dateUtils'
 import { validateReminder } from '@/src/utils/validation'
+import { cancelReminderNotification, scheduleReminderNotification } from './notificationService'
 
 export async function createReminder(input: ReminderInput): Promise<ReminderItem> {
   const validationErrors = validateReminder(input)
@@ -31,6 +32,7 @@ export async function createReminder(input: ReminderInput): Promise<ReminderItem
   }
 
   await reminderRepository.insert(reminder)
+  await scheduleReminderNotification(reminder)
   return reminder
 }
 
@@ -74,6 +76,7 @@ export async function updateReminder(id: string, input: ReminderInput): Promise<
   }
 
   await reminderRepository.update(reminder)
+  await scheduleReminderNotification(reminder)
   return reminder
 }
 
@@ -102,6 +105,23 @@ export async function completeReminder(id: string, performedDate: string): Promi
   }
 
   await reminderRepository.update(reminder)
+  await scheduleReminderNotification(reminder)
+  return reminder
+}
+
+export async function snoozeReminder(id: string, snoozedUntil: string): Promise<ReminderItem> {
+  const current = await reminderRepository.findById(id)
+  if (!current) {
+    throw new Error('リマインダーが見つかりません')
+  }
+
+  const reminder: ReminderItem = {
+    ...current,
+    snoozedUntil,
+    updatedAt: new Date().toISOString(),
+  }
+  await reminderRepository.update(reminder)
+  await scheduleReminderNotification(reminder)
   return reminder
 }
 
@@ -111,5 +131,6 @@ export async function deleteReminder(id: string): Promise<void> {
     throw new Error('リマインダーが見つかりません')
   }
 
+  await cancelReminderNotification(id)
   await reminderRepository.deleteById(id)
 }

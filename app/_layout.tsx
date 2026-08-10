@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react'
-import { Stack } from 'expo-router'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import * as Notifications from 'expo-notifications'
+import { router, Stack } from 'expo-router'
+import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native'
 
 import { database } from '@/src/db/database'
 import { runMigrations } from '@/src/db/migrations'
+import * as reminderRepository from '@/src/db/reminderRepository'
+import {
+  initializeNotifications,
+  rescheduleAllNotifications,
+  SNOOZE_ONE_WEEK,
+  SNOOZE_THREE_DAYS,
+  SNOOZE_TOMORROW,
+} from '@/src/services/notificationService'
+import { snoozeReminder } from '@/src/services/reminderService'
+import { getSnoozedDate } from '@/src/utils/dateUtils'
 
 export default function RootLayout() {
   const [isReady, setIsReady] = useState(false)
@@ -11,10 +22,42 @@ export default function RootLayout() {
 
   useEffect(() => {
     runMigrations(database)
+      .then(async () => {
+        await initializeNotifications()
+        await rescheduleAllNotifications(await reminderRepository.findAll())
+      })
       .then(() => setIsReady(true))
       .catch((migrationError: unknown) => {
         setError(migrationError instanceof Error ? migrationError : new Error('DBの初期化に失敗しました'))
       })
+  }, [])
+
+  useEffect(() => {
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      const reminderId = response.notification.request.content.data?.reminderId
+      if (typeof reminderId !== 'string') return
+
+      const days = response.actionIdentifier === SNOOZE_TOMORROW
+        ? 1
+        : response.actionIdentifier === SNOOZE_THREE_DAYS
+          ? 3
+          : response.actionIdentifier === SNOOZE_ONE_WEEK
+            ? 7
+            : null
+
+      if (days) {
+        snoozeReminder(reminderId, getSnoozedDate(days)).catch((snoozeError: unknown) => {
+          Alert.alert(
+            'スヌーズできませんでした',
+            snoozeError instanceof Error ? snoozeError.message : '時間をおいて再度お試しください',
+          )
+        })
+      } else {
+        router.push(`/reminders/${reminderId}`)
+      }
+    })
+
+    return () => subscription.remove()
   }, [])
 
   if (error) {

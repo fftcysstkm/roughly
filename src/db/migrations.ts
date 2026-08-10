@@ -1,6 +1,6 @@
 import { SQLiteDatabase } from 'expo-sqlite'
 
-const DATABASE_VERSION = 1
+const DATABASE_VERSION = 2
 
 export async function runMigrations(database: SQLiteDatabase): Promise<void> {
   const result = await database.getFirstAsync<{ user_version: number }>('PRAGMA user_version')
@@ -29,6 +29,18 @@ export async function runMigrations(database: SQLiteDatabase): Promise<void> {
 
         CREATE INDEX reminder_items_next_notification_date_idx
           ON reminder_items(next_notification_date);
+      `)
+    }
+
+
+    if (currentVersion < 2) {
+      await database.execAsync(`
+        CREATE TABLE app_settings (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
+
+        INSERT INTO app_settings (key, value) VALUES ('notification_time', '09:00');
       `)
     }
 
