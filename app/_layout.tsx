@@ -9,9 +9,11 @@ import {
   initializeNotifications,
   areNotificationsAvailable,
   rescheduleAllNotifications,
+  scheduleTestSnoozeNotification,
   SNOOZE_ONE_WEEK,
   SNOOZE_THREE_DAYS,
   SNOOZE_TOMORROW,
+  TEST_SNOOZE_FIVE_SECONDS,
 } from '@/src/services/notificationService'
 import { snoozeReminder } from '@/src/services/reminderService'
 import { getSnoozedDate } from '@/src/utils/dateUtils'
@@ -42,6 +44,16 @@ export default function RootLayout() {
       if (!isMounted) return
 
       const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+        if (response.actionIdentifier === TEST_SNOOZE_FIVE_SECONDS) {
+          scheduleTestSnoozeNotification().catch((snoozeError: unknown) => {
+            Alert.alert(
+              'テストスヌーズできませんでした',
+              snoozeError instanceof Error ? snoozeError.message : '時間をおいて再度お試しください',
+            )
+          })
+          return
+        }
+
         const reminderId = response.notification.request.content.data?.reminderId
         if (typeof reminderId !== 'string') return
 

@@ -8,8 +8,10 @@ import { createNotificationDate } from '@/src/utils/dateUtils'
 export const SNOOZE_TOMORROW = 'SNOOZE_TOMORROW'
 export const SNOOZE_THREE_DAYS = 'SNOOZE_THREE_DAYS'
 export const SNOOZE_ONE_WEEK = 'SNOOZE_ONE_WEEK'
+export const TEST_SNOOZE_FIVE_SECONDS = 'TEST_SNOOZE_FIVE_SECONDS'
 
 const REMINDER_CATEGORY = 'REMINDER_ACTIONS'
+const TEST_REMINDER_CATEGORY = 'TEST_REMINDER_ACTIONS'
 const REMINDER_CHANNEL = 'reminders'
 
 type NotificationModule = typeof import('expo-notifications')
@@ -46,6 +48,9 @@ export async function initializeNotifications(): Promise<void> {
     { identifier: SNOOZE_TOMORROW, buttonTitle: '明日' },
     { identifier: SNOOZE_THREE_DAYS, buttonTitle: '3日後' },
     { identifier: SNOOZE_ONE_WEEK, buttonTitle: '1週間後' },
+  ])
+  await Notifications.setNotificationCategoryAsync(TEST_REMINDER_CATEGORY, [
+    { identifier: TEST_SNOOZE_FIVE_SECONDS, buttonTitle: '5秒後に再通知' },
   ])
 }
 
@@ -113,7 +118,7 @@ export async function rescheduleAllNotifications(reminders: ReminderItem[]): Pro
   }
 }
 
-export async function scheduleTestNotification(): Promise<void> {
+async function scheduleTestNotificationWithBody(body: string): Promise<void> {
   if (!areNotificationsAvailable()) {
     throw new Error('Expo Goでは通知を利用できません。APK版でお試しください')
   }
@@ -125,7 +130,9 @@ export async function scheduleTestNotification(): Promise<void> {
   await Notifications.scheduleNotificationAsync({
     content: {
       title: 'Roughly テスト通知',
-      body: 'ローカル通知は正常に動作しています。',
+      body,
+      data: { isSnoozeTest: true },
+      categoryIdentifier: TEST_REMINDER_CATEGORY,
       sound: true,
     },
     trigger: Platform.OS === 'android'
@@ -141,4 +148,12 @@ export async function scheduleTestNotification(): Promise<void> {
           repeats: false,
         },
   })
+}
+
+export async function scheduleTestNotification(): Promise<void> {
+  await scheduleTestNotificationWithBody('「5秒後に再通知」でスヌーズも試せます。')
+}
+
+export async function scheduleTestSnoozeNotification(): Promise<void> {
+  await scheduleTestNotificationWithBody('テストスヌーズ後の再通知です。')
 }

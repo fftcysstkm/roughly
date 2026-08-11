@@ -46,7 +46,10 @@ export default function SettingsScreen() {
     setIsWorking(true)
     try {
       await scheduleTestNotification()
-      Alert.alert('予約しました', '5秒後に通知します。アプリを閉じるか、バックグラウンドにしてください。')
+      Alert.alert(
+        '予約しました',
+        '5秒後に通知します。通知の「5秒後に再通知」を押すと、テストスヌーズを確認できます。',
+      )
     } catch (error) {
       Alert.alert('テスト通知を予約できませんでした', getErrorMessage(error))
     } finally {
@@ -128,7 +131,7 @@ export default function SettingsScreen() {
         onPress={() => void handleTestNotification()}
         style={[styles.secondaryButton, (isWorking || !areNotificationsAvailable()) && styles.disabled]}
       >
-        <Text style={styles.secondaryButtonText}>5秒後にテスト通知</Text>
+        <Text style={styles.secondaryButtonText}>5秒後に通知・スヌーズをテスト</Text>
       </Pressable>
 
       <View style={styles.section}>
